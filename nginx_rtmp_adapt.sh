@@ -1,4 +1,63 @@
 #!/bin/bash -ex
+
+app="$1"
+name="$2"
+
+time="$(date +%Y%m%d-%H%M%S)"
+rec="/mnt/nas/Media/Live/hls/recording/${name}_${time}"
+
+exec ffmpeg -hide_banner -hwaccel qsv -c:v h264_qsv \
+    -i rtmp://localhost/$app/$name \
+    \
+    -c:v copy \
+    -c:a copy \
+    -f flv rtmp://127.0.0.1/adapthls/${name}_src \
+    \
+    -c:v h264_qsv -b:v 8M -vf vpp_qsv=w=1920:h=1080 -tune zerolatency -preset veryfast \
+    -c:a copy \
+    -f mpegts - \
+    \
+    -c:v h264_qsv -b:v 3641k -vf vpp_qsv=w=1280:h=720 -tune zerolatency -preset veryfast \
+    -c:a aac -b:a 128k \
+    -f flv rtmp://127.0.0.1/adapthls/${name}_720 \
+    \
+    -c:v h264_qsv -b:v 1618k -vf vpp_qsv=w=854:h=480 -tune zerolatency -preset veryfast \
+    -c:a aac -b:a 96k \
+    -f flv rtmp://127.0.0.1/adapthls/${name}_480 \
+    \
+    2>>/var/log/nginx_rtmp/ffmpeg-$app-$name.log \
+    | \
+ffmpeg -i - \
+    -c copy \
+    -f mpegts ${rec}.ts \
+    \
+    -c copy \
+    -f flv rtmp://127.0.0.1/adapthls/${name}_1080 \
+    2>>/var/log/nginx_rtmp/ffmpeg_rec-$app-$name.log \
+
+
+exit
+
+
+    | \
+ffmpeg -i - \
+    -c copy \
+    -f mpegts ${rec}.ts \
+    \
+    -c copy \
+    -f flv rtmp://127.0.0.1/adapthls/$name_1080 \
+    2>>/var/log/nginx_rtmp/ffmpeg_rec-$app-$name.log \
+
+exit
+
+
+
+
+
+
+
+
+
 while killall ffmpeg; do sleep 1; done
 
 exec &> /tmp/rtmp_adaptive.log
@@ -7,7 +66,7 @@ name="$1"
 vopts="-c:v libx264 -tune zerolatency -preset veryfast -crf 26 -f flv"
 #vopts="-c:v libx264 -preset fast -crf 28 -f flv"
 aopts="-c:a aac"
-hvopts="-c:v h264_qsv -f flv -tune zerolatency -preset veryfast"
+hvopts="-c:v h264_qsv -tune zerolatency -preset veryfast"
 
 # w	h	b:v	b:a	b	bw/1000
 # 3840	2160	32768	256	33024	33817
@@ -59,9 +118,9 @@ rec="/mnt/nas/Media/Live/hls/recording/${name}_${time}"
 
 # Hardware decoding and encoding
 if true; then
-	ffmpeg -hwaccel qsv -c:v h264_qsv -i rtmp://localhost/adapt/$name \
+	exec ffmpeg -hide_banner -hwaccel qsv -c:v h264_qsv -i rtmp://localhost/adapt/$name \
 	  -c:v copy -c:a copy -f flv rtmp://127.0.0.1/adapthls/${name}_src \
-	  $hvopts -c:a copy -b:v 8M -vf vpp_qsv=w=1920:h=1080 rtmp://127.0.0.1/adapthls/${name}_1080 \
+	  $hvopts -c:a copy -b:v 8M -vf vpp_qsv=w=1920:h=1080 -f mpegts - \
 	  $(nconv 1600 900 900 5689k 128k) \
 	  $(nconv 1366 768 768 4143k 128k) \
 	  $(hconv 1280 720 720 3641k 128k) \
@@ -70,6 +129,9 @@ if true; then
 	  $(hconv  854 480 480 1618k  96k) \
 	  $(nconv  654 368 360  910k  64k) \
 	  $(nconv  426 240 240  405k  64k) \
+  | ffmpeg -hide_banner -i - \
+      -c copy -f mpegts ${rec}.ts \
+      -c copy -f flv rtmp://127.0.0.1/adapthls/${name}_1080
 
 	exit
 fi
