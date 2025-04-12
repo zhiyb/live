@@ -32,7 +32,8 @@
       key = 'stream';
 
     function lvl_desc(lvl) {
-      return lvl.width + 'x' + lvl.height + ' ' + (lvl.bitrate/1024/1024).toPrecision(2) + 'Mbps';
+      return lvl.width + 'x' + lvl.height + ' ' + (lvl.bitrate/1024/1024).toPrecision(2) + 'Mbps'
+        + ' / ' + lvl.videoCodec + ' / ' + lvl.audioCodec;
     }
 
     var video = document.getElementById('video');
