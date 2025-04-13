@@ -42,7 +42,7 @@ qsv_hevc_params="-low_power 0 -tier main -preset veryfast -tune zerolatency -sce
 hls_params="-hls_time 4 -hls_list_size 32 -hls_flags delete_segments -master_pl_publish_rate 30"
 # -hls_init_time 8
 
-rm "${dst}_"*
+rm -f "${dst}_"*
 
 ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
     \
@@ -109,6 +109,13 @@ ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
                     -c:v:0 copy \
                     -map 0:v:1 -map 0:a:0 \
                     -f mpegts "${rec}_${time}.ts" \
+                    \
+                    \
+                    -c:a:0 copy \
+                    -c:v:0 copy \
+                    -map 0:v:4 -map 0:a:1 \
+                    -f flv rtmp://vps.wg:1935/live/${name} \
+                    \
                     \
                     -c:a:0 copy \
                     -c:a:1 copy -b:a:1 160k \
