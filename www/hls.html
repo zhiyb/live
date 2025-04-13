@@ -18,7 +18,7 @@
 
 <body>
   <script src="jquery-3.7.1.min.js"></script>
-  <script src="/hlsjs/hls.min.js"></script>
+  <script src="hls-1.6.2.min.js"></script>
 
   <video width="100%" id="video" controls></video>
   <br><br>
@@ -38,16 +38,17 @@
         debug: true
       });
 
-      hls.on(Hls.Events.MEDIA_ATTACHED, function () {
-        let video = $("#video").get();
-        video.muted = false;
-        video.play();
-      });
-      hls.on(Hls.Events.LEVEL_SWITCHED, function () {
+      // hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+      //   let video = $("#video").get();
+      //   video.muted = false;
+      //   video.play();
+      // });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, () => {
         document.getElementById("cq").innerHTML = (hls.autoLevelEnabled ? "(auto) " : "") +
           lvl_desc(hls.levels[hls.currentLevel]);
       });
-      hls.on(Hls.Events.LEVEL_UPDATED, function () {
+      hls.on(Hls.Events.LEVEL_UPDATED, () => {
         let html = '<button value="-1">Auto</button><br>';
         for (let i in hls.levels)
           html += `<button value="${i}">${lvl_desc(hls.levels[i])}</button><br>`;
@@ -76,11 +77,17 @@
       // This is using the built-in support of the plain video element, without using hls.js.
       else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = key + '.m3u8';
-        video.addEventListener('canplay', function () {
+        video.addEventListener('canplay', () => {
           video.play();
         });
       }
     }
+
+    $("#hdr_sel").on("click", (evt) => {
+      let val = evt.target.value;
+      if (val !== undefined)
+        hls_start(val);
+    });
 
 
     function findGetParameter(parameterName) {
@@ -98,20 +105,36 @@
       key = 'stream';
     $("#video").css("background-image", `url("${key}.png")`);
 
-    // Check HEVC (HDR) support
-    $.get(key + "_hevc.m3u8", function() {
-      $("#hdr_sel").html(`<button value="${key}_hevc">HEVC (HDR)</button>` +
-        `<button value="${key}_h264">H264 (SDR)</button>`);
-      $("#hdr_sel").on("click", (evt) => {
-        let val = evt.target.value;
-        if (val !== undefined)
-          hls_start(val);
+    // Find usable data path
+    const url_list = [
+      "/nas/hls_ffmpeg/",
+      "",
+    ];
+
+    function url_test_next(i_url) {
+      const url_base = url_list[i_url] + key;
+      // console.log(i_url, key, url_base);
+
+      $.get(url_base + "_hevc.m3u8", () => {
+        // Found HEVC HDR playlist
+        $("#hdr_sel").html(`<button value="${url_base}_hevc">HEVC (HDR)</button>` +
+          `<button value="${url_base}_h264">H264 (SDR)</button>`);
+        hls_start(url_base + "_hevc");
+
+      }).fail(() => {
+        $.get(url_base + ".m3u8", () => {
+          // Found basic H264 SDR playlist
+          hls_start(url_base);
+
+        }).fail(() => {
+          // Try next URL
+          i_url += 1;
+          if (i_url < url_list.length)
+            url_test_next(i_url);
+        });
       });
+    }
 
-      hls_start(key + "_hevc");
-
-    }).fail(function() {
-      hls_start(key);
-    });
+    url_test_next(0);
   </script>
 </html>
