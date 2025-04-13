@@ -20,10 +20,10 @@ name=stream
 time="$(date +%Y%m%d-%H%M%S)"
 
 # input="-f flv -listen 1 -i rtmp://0.0.0.0:19352/$app/$name"
-# input="-i srt://:19352?mode=listener"
+input="-i srt://:19352?mode=listener"
 # input="-i src_20250412-224805.ts"
 # input="-re -i src_20250412-224805.ts"
-input="-re -i src_20250413-143826.ts"
+# input="-re -i src_20250413-143826.ts"
 # dst="/var/www/hls_adapt/$name"
 dst="/mnt/nas/Media/Live/hls/hls_ffmpeg/$name"
 rec="/mnt/nas/Media/Live/hls/recording/$name"
