@@ -4,48 +4,42 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {background-color: black;}
+    div {font-size: 1.2em;}
+    button {font-size: 1.2em;}
+    video {
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+  </style>
 </head>
 
-<body style="background-color: black">
+<body>
+  <script src="jquery-3.7.1.min.js"></script>
   <script src="/hlsjs/hls.min.js"></script>
 
-  <video width="100%" id="video" controls
-    style="background-size: contain; background-repeat: no-repeat; background-position: center">
-  </video>
-  <br>
-  <div><font color="white">Current quality: <span id="cq"></span></font></div>
+  <video width="100%" id="video" controls></video>
+  <br><br>
+  <div><font color="white">Current quality: <span id="cq"></span></font></div><br>
+  <div id="hdr_sel"></div><br>
   <div id="qbtns"><button value="-1">Auto</button></div>
 
   <script>
-    function findGetParameter(parameterName) {
-      var result = null, tmp = [];
-      var items = location.search.substr(1).split("&");
-      for (var index = 0; index < items.length; index++) {
-        tmp = items[index].split("=");
-        if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
-      }
-      return result;
-    }
-
-    var key = findGetParameter('key');
-    if (!key)
-      key = 'stream';
-
     function lvl_desc(lvl) {
       return lvl.width + 'x' + lvl.height + ' ' + (lvl.bitrate/1024/1024).toPrecision(2) + 'Mbps'
         + ' / ' + lvl.videoCodec + ' / ' + lvl.audioCodec;
     }
 
-    var video = document.getElementById('video');
-    video.style.backgroundImage = `url("${key}.png")`;
-
+    let hls = null;
     if (Hls.isSupported()) {
-      var hls = new Hls({
+      hls = new Hls({
         debug: true
       });
-      hls.loadSource(key + '.m3u8');
-      hls.attachMedia(video);
+
       hls.on(Hls.Events.MEDIA_ATTACHED, function () {
+        let video = $("#video").get();
         video.muted = false;
         video.play();
       });
@@ -59,22 +53,65 @@
           html += `<button value="${i}">${lvl_desc(hls.levels[i])}</button><br>`;
         document.getElementById("qbtns").innerHTML = html;
       });
-      document.getElementById("qbtns").addEventListener("click", (evt) => {
+
+      $("#qbtns").on("click", (evt) => {
         let val = evt.target.value;
         if (val !== undefined) {
-          // hls.nextLevel = parseInt(val);
-          hls.currentLevel = parseInt(val);
+          hls.nextLevel = parseInt(val);
+          // hls.currentLevel = parseInt(val);
         }
       });
+
+      hls.attachMedia($("#video").get(0));
     }
-    // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
-    // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element through the `src` property.
-    // This is using the built-in support of the plain video element, without using hls.js.
-    else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = key + '.m3u8';
-      video.addEventListener('canplay', function () {
-        video.play();
+
+    function hls_start(key) {
+      let video = $("#video").get(0);
+
+      if (Hls.isSupported()) {
+        hls.loadSource(key + '.m3u8');
+      }
+      // hls.js is not supported on platforms that do not have Media Source Extensions (MSE) enabled.
+      // When the browser has built-in HLS support (check using `canPlayType`), we can provide an HLS manifest (i.e. .m3u8 URL) directly to the video element through the `src` property.
+      // This is using the built-in support of the plain video element, without using hls.js.
+      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = key + '.m3u8';
+        video.addEventListener('canplay', function () {
+          video.play();
+        });
+      }
+    }
+
+
+    function findGetParameter(parameterName) {
+      var result = null, tmp = [];
+      var items = location.search.substr(1).split("&");
+      for (var index = 0; index < items.length; index++) {
+        tmp = items[index].split("=");
+        if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+      }
+      return result;
+    }
+
+    let key = findGetParameter('key');
+    if (!key)
+      key = 'stream';
+    $("#video").css("background-image", `url("${key}.png")`);
+
+    // Check HEVC (HDR) support
+    $.get(key + "_hevc.m3u8", function() {
+      $("#hdr_sel").html(`<button value="${key}_hevc">HEVC (HDR)</button>` +
+        `<button value="${key}_h264">H264 (SDR)</button>`);
+      $("#hdr_sel").on("click", (evt) => {
+        let val = evt.target.value;
+        if (val !== undefined)
+          hls_start(val);
       });
-    }
+
+      hls_start(key + "_hevc");
+
+    }).fail(function() {
+      hls_start(key);
+    });
   </script>
 </html>
