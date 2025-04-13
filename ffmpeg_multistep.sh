@@ -22,10 +22,11 @@ time="$(date +%Y%m%d-%H%M%S)"
 # input="-f flv -listen 1 -i rtmp://0.0.0.0:19352/$app/$name"
 # input="-i srt://:19352?mode=listener"
 # input="-i src_20250412-224805.ts"
-input="-re -i src_20250412-224805.ts"
-# input="-re -i src_20250413-143826.ts"
+# input="-re -i src_20250412-224805.ts"
+input="-re -i src_20250413-143826.ts"
 # dst="/var/www/hls_adapt/$name"
 dst="/mnt/nas/Media/Live/hls/hls_ffmpeg/$name"
+rec="/mnt/nas/Media/Live/hls/recording/$name"
 # rec="/mnt/nas/Media/Live/hls/recording/${name}_${time}"
 hls="max-files=16 target-duration=4 playlist-length=8"
 
@@ -48,7 +49,7 @@ ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
     -c:a:0 copy \
     -c:v:0 copy \
     -map 0:v:0 -map 0:a:0 \
-    -f mpegts src_"${time}".ts \
+    -f null src_"${time}".ts \
     \
     -c:a:0 copy \
     -c:v:0 copy -b:v:0 40M \
@@ -104,6 +105,10 @@ ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
                 -map 0:a:0 -map 0:a:1 \
                 -f mpegts - | ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv -f mpegts -i - \
                     \
+                    -c:a:0 copy \
+                    -c:v:0 copy \
+                    -map 0:v:1 -map 0:a:0 \
+                    -f mpegts "${rec}_${time}.ts" \
                     \
                     -c:a:0 copy \
                     -c:a:1 copy -b:a:1 160k \
@@ -117,7 +122,7 @@ ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
                     \
                     -map 0:v:0 -map 0:v:1 -map 0:v:2 -map 0:v:3 -map 0:v:4 -map 0:v:5 \
                     -map 0:a:0 -map 0:a:1 \
-                    -f mpegts "ffmpeg_${time}.ts" \
+                    -f null "ffmpeg_${time}.ts" \
                     \
                     \
                     -c:a:0 copy \
@@ -153,7 +158,6 @@ ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
 "v:1,a:1,name:480_h264_audio "\
                     -master_pl_name "${name}_h264.m3u8" $hls_params \
                     "${dst}_%v.m3u8"
-
 
 
 
