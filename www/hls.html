@@ -23,7 +23,7 @@
   <video width="100%" id="video" controls></video>
   <br><br>
   <div><font color="white">Current quality: <span id="cq"></span></font></div><br>
-  <div id="hdr_sel"></div><br>
+  <div id="plist_sel"></div><br>
   <div id="qbtns"><button value="-1">Auto</button></div>
 
   <script>
@@ -83,7 +83,7 @@
       }
     }
 
-    $("#hdr_sel").on("click", (evt) => {
+    $("#plist_sel").on("click", (evt) => {
       let val = evt.target.value;
       if (val !== undefined)
         hls_start(val);
@@ -116,22 +116,30 @@
       const url_base = url_list[i_url] + key;
       // console.log(i_url, key, url_base);
 
-      $.get(url_base + "_hevc.m3u8", () => {
+      $.get(url_base + "-hevc.m3u8", () => {
         // Found HEVC HDR playlist
-        $("#hdr_sel").html(`<button value="${url_base}_hevc">HEVC (HDR)</button>` +
-          `<button value="${url_base}_h264">H264 (SDR)</button>`);
-        hls_start(url_base + "_hevc");
+        $("#plist_sel").html(`<button value="${url_base}-hevc">HEVC (HDR)</button>` +
+          `<button value="${url_base}">H264 (SDR)</button>`);
+        hls_start(url_base + "-hevc");
 
       }).fail(() => {
-        $.get(url_base + ".m3u8", () => {
-          // Found basic H264 SDR playlist
-          hls_start(url_base);
+        $.get(url_base + "-hq.m3u8", () => {
+          // Found high quality audio playlist
+          $("#plist_sel").html(`<button value="${url_base}-hq">HQ Audio</button>` +
+            `<button value="${url_base}">Standard</button>`);
+          hls_start(url_base + "-hq");
 
         }).fail(() => {
-          // Try next URL
-          i_url += 1;
-          if (i_url < url_list.length)
-            url_test_next(i_url);
+          $.get(url_base + ".m3u8", () => {
+            // Found basic H264 SDR playlist
+            hls_start(url_base);
+
+          }).fail(() => {
+            // Try next URL
+            i_url += 1;
+            if (i_url < url_list.length)
+              url_test_next(i_url);
+          });
         });
       });
     }
