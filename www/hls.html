@@ -103,7 +103,7 @@
     let key = findGetParameter('key');
     if (!key)
       key = 'stream';
-    $("#video").css("background-image", `url("${key}.png")`);
+    $("#video").css("background-image", `url("../hls_data/${key}.png")`);
 
     // Find usable data path
     const url_list = [
