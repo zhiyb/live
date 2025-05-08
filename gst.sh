@@ -12,8 +12,9 @@ name=gstreamer
 # 1280  720     3641    128     3769    3859
 # 854   480     1618    96      1714    1755
 
-src="videotestsrc is-live=true ! video/x-raw,width=3840,height=2160 ! qsvh265enc"
+# src="videotestsrc is-live=true ! video/x-raw,width=3840,height=2160 ! qsvh265enc"
 # src="rtmpsrc location=rtmp://localhost/$app/$name"
+src="filesrc location=src_20250412-224805.ts"
 dst="/var/www/hls_adapt/$name"
 # dst="$name"
 hls="max-files=16 target-duration=4 playlist-length=8"
@@ -38,7 +39,7 @@ h265="rate-control=vbr keyframe-period=0 quality-level=4"
 
 time="$(date +%Y%m%d-%H%M%S)"
 
-gst-launch-1.0 filesrc location=src_20250319-192444.ts ! queue ! tsdemux name=demux \
+gst-launch-1.0 "$src" ! queue ! tsdemux name=demux \
     demux. ! aacparse ! queue ! \
         hlssink2 $hls playlist-location=${dst}_audio.m3u8 location=${dst}_audio_%08d.aac \
     demux. ! h265parse ! queue ! tee name=vsrc_enc \
