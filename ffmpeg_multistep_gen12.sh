@@ -11,7 +11,9 @@ name=stream
 
 source "$(dirname "$0")"/ffmpeg_config.sh
 
-input="-i srt://:19352?mode=listener"
+# input="-i srt://:19352?mode=listener"
+input="-i rist://@[::]:19352?cname=live"
+# input="-f flv -listen 1 -analyzeduration 10000000 -probesize 50000000 -i rtmp://0.0.0.0:19352/$app/$name"
 # input="-re -i src_20250413-143826.ts"
 
 # w     h       b:v     b:a     b       bw/1000
@@ -20,8 +22,8 @@ input="-i srt://:19352?mode=listener"
 # 1280  720     3641    128     3769    3859
 # 854   480     1618    96      1714    1755
 
-qsv_h264_params="-low_power 1 -tune zerolatency -preset veryfast"
-qsv_hevc_params="-low_power 1 -tier main -preset veryfast -tune zerolatency -scenario livestreaming"
+qsv_h264_params="-low_power 1 -tune zerolatency -preset medium"
+qsv_hevc_params="-low_power 1 -tier main -preset medium -tune zerolatency -scenario livestreaming"
 
 
 rm -f "${dst}-"*
