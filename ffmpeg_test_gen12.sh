@@ -66,12 +66,13 @@ $ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
             \
             -map 0:v:0 -map 0:v:1 -map 0:v:2 -map 0:v:2 \
             -map 0:a:0 -map 0:a:1 \
-            -f mpegts step4_${time}.ts -y
+            -f segment -segment_format mpegts -strftime 1 -segment_time 24:00:00 step4_%Y-%m-%dT%H-%M-%S%z.ts -y
 
 exit
 
+            # -f mpegts step4_${time}.ts -y
 
-            -f mpegts step3_${time}.ts -y
+            # -f mpegts step3_${time}.ts -y
 
             # -init_hw_device opencl=ocl -init_hw_device qsv -filter_hw_device ocl \
 

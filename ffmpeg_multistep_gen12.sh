@@ -12,7 +12,7 @@ name=stream
 source "$(dirname "$0")"/ffmpeg_config.sh
 
 # input="-i srt://:19352?mode=listener"
-input="-i rist://@[::]:19352?cname=live"
+input="-i rist://@[::]:19352?cname=live&session-timeout=5000&keepalive-interval=2000"
 # input="-f flv -listen 1 -analyzeduration 10000000 -probesize 50000000 -i rtmp://0.0.0.0:19352/$app/$name"
 # input="-re -i src_20250413-143826.ts"
 
@@ -31,11 +31,6 @@ rm -f "${dst}-"*
 ffmpeg="$(dirname "$0")/ffmpeg-master-latest-linux64-gpl/bin/ffmpeg"
 
 $ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
-    \
-    -c:a:0 copy \
-    -c:v:0 copy \
-    -map 0:v:0 -map 0:a:0 \
-    -f null src_"${time}".ts \
     \
     -c:a:0 copy \
     -c:v:0 copy -b:v:0 40M \
@@ -77,26 +72,13 @@ $ffmpeg -hide_banner -hwaccel qsv -hwaccel_output_format qsv $input \
                 -c:a:0 copy \
                 -c:v:0 copy \
                 -map 0:v:1 -map 0:a:0 \
-                -f mpegts "${rec}_${time}.ts" \
+                -f segment -segment_format mpegts -strftime 1 -segment_time 24:00:00 "${rec}_%Y-%m-%dT%H-%M-%S%z.ts" \
                 \
                 \
                 -c:a:0 copy \
                 -c:v:0 copy \
                 -map 0:v:3 -map 0:a:1 \
                 -f flv rtmp://vps.wg:1935/live/${name} \
-                \
-                \
-                -c:a:0 copy \
-                -c:a:1 copy -b:a:1 160k \
-                \
-                -c:v:0 copy -tag:v:0 hvc1 -b:v:0 40M \
-                -c:v:1 copy -tag:v:1 hvc1 -b:v:1 10M \
-                -c:v:2 copy -tag:v:2 avc1 -b:v:2 3200k \
-                -c:v:3 copy -tag:v:3 avc1 -b:v:3 1500k \
-                \
-                -map 0:v:0 -map 0:v:1 -map 0:v:2 -map 0:v:3 \
-                -map 0:a:0 -map 0:a:1 \
-                -f null "ffmpeg_${time}.ts" \
                 \
                 \
                 -c:a:0 copy \
