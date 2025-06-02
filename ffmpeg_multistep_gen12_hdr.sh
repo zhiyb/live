@@ -12,7 +12,9 @@ name=stream
 source "$(dirname "$0")"/ffmpeg_config.sh
 
 # input="-i srt://:19352?mode=listener"
-input="-i rist://@[::]:19352?cname=live&session-timeout=5000&keepalive-interval=2000"
+# input="-i rist://@[::]:19352?cname=live&session-timeout=5000&keepalive-interval=2000&overrun_nonfatal=0&fifo_size=4096"
+input="-overrun_nonfatal 1 -fifo_size 262144 -i rist://@[::]:19352?cname=live&session-timeout=5000&keepalive-interval=2000"
+# input="-i rist://@[::]:19352?cname=live&session-timeout=5000&keepalive-interval=2000&overrun_nonfatal=1&fifo_size=16384"
 # input="-f flv -listen 1 -analyzeduration 10000000 -probesize 50000000 -i rtmp://0.0.0.0:19352/$app/$name"
 # input="-re -i src_20250413-143826.ts"
 
