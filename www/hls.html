@@ -107,8 +107,9 @@
 
     // Find usable data path
     const url_list = [
-      "/nas/hls_ffmpeg/",
+      "../hls_ffmpeg/",
       "../hls_data/",
+      "../hls_fm/",
       "",
     ];
 
@@ -118,7 +119,7 @@
 
       $.get(url_base + "-hevc.m3u8", () => {
         // Found HEVC HDR playlist
-        $("#plist_sel").html(`<button value="${url_base}-hevc">HEVC (HDR)</button>` +
+        $("#plist_sel").html(`<button value="${url_base}-hevc">HEVC (HDR maybe)</button>` +
           `<button value="${url_base}">H264 (SDR)</button>`);
         hls_start(url_base + "-hevc");
 
